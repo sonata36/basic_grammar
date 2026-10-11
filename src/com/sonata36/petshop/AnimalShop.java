@@ -2,7 +2,8 @@ package com.sonata36.petshop;
 
 /** 宠物店的基本营业行为。 */
 public interface AnimalShop {
-    void buyAnimal(Animal animal);
+    /** 以低于动物售价的成本价进货。 */
+    void buyAnimal(Animal animal, double costPrice);
 
     Animal serveCustomer(Customer customer);
 
