@@ -24,7 +24,7 @@ public final class Test {
         initialCustomers.add(new Customer("老顾客", 1, today.minusDays(1)));
 
         MyAnimalShop shop = new MyAnimalShop(500, initialAnimals, initialCustomers, clock);
-        shop.buyAnimal(new ChineseRuralDog("阿黄", 1, "公", true));
+        shop.buyAnimal(new ChineseRuralDog("阿黄", 1, "公", true), 70.0);
         Customer alice = new Customer("小林");
         check(shop.serveCustomer(alice) instanceof Cat, "应先出售最早入库的猫");
         check(shop.serveCustomer(alice) instanceof ChineseRuralDog, "应出售田园犬");
@@ -40,19 +40,43 @@ public final class Test {
         check(animalMissing, "库存售罄应抛出 AnimalNotFoundException");
         check(shop.getCustomers().size() == 4, "缺货顾客也应记入到店记录");
         check(shop.getAnimals().isEmpty(), "售出后应从库存移除动物");
-        check(shop.getBalance() == 700.0, "余额应计入买入成本与售出收入");
-        check(shop.getProfit(today) == 200.0, "当日利润应为销售额减买入成本");
+        check(shop.getBalance() == 730.0, "余额应计入买入成本与售出收入");
+        check(shop.getProfit(today) == 230.0, "当日利润应为销售额减买入成本");
 
         MyAnimalShop poorShop = new MyAnimalShop(50, List.of());
         boolean insufficientBalance = false;
         try {
-            poorShop.buyAnimal(new Rabbit("团团", 1, "母"));
+            poorShop.buyAnimal(new Rabbit("团团", 1, "母"), 60.0);
         } catch (InsufficientBalanceException exception) {
             insufficientBalance = true;
             check(!exception.getMessage().isBlank(), "余额不足异常应包含错误信息");
         }
         check(insufficientBalance, "余额不足应抛出 InsufficientBalanceException");
         check(poorShop.getAnimals().isEmpty(), "买入失败不应改变库存");
+
+        boolean invalidCost = false;
+        try {
+            poorShop.buyAnimal(new Rabbit("团团", 1, "母"), Rabbit.PRICE);
+        } catch (IllegalArgumentException exception) {
+            invalidCost = true;
+        }
+        check(invalidCost, "成本价不低于售价时应拒绝进货");
+        check(poorShop.getBalance() == 50.0, "无效成本价不应改变余额");
+
+        boolean tooManyDecimals = false;
+        try {
+            poorShop.buyAnimal(new Rabbit("团团", 1, "母"), 49.999);
+        } catch (IllegalArgumentException exception) {
+            tooManyDecimals = true;
+        }
+        check(tooManyDecimals, "成本价超过两位小数时应拒绝进货");
+
+        MyAnimalShop marginShop = new MyAnimalShop(500, List.of(), new ArrayList<>(), clock);
+        marginShop.buyAnimal(new Cat("咪咪", 1, "母"), 150.0);
+        check(marginShop.getBalance() == 350.0, "进货应按成本价扣余额");
+        marginShop.serveCustomer(new Customer("小赵"));
+        check(marginShop.getBalance() == 550.0, "售出应按固定售价入账");
+        check(marginShop.getProfit(today) == 50.0, "利润应等于售价减成本价");
 
         MyAnimalShop choiceShop = new MyAnimalShop(500, List.of(
                 new ChineseRuralDog("大黄", 3, "公", true),
@@ -87,11 +111,11 @@ public final class Test {
         String report = reportBytes.toString(StandardCharsets.UTF_8);
         check(!report.contains("老顾客"), "歇业报表不应包含昨天到店的顾客");
         check(report.contains("小王"), "缺货顾客仍应出现在当日到店记录中");
-        check(report.contains("今日利润：200.00 元"), "歇业报表应输出当日利润");
+        check(report.contains("今日利润：230.00 元"), "歇业报表应输出当日利润");
         System.out.print(report);
         check(!shop.isOpen(), "歇业后营业状态应为关闭");
         try {
-            shop.buyAnimal(new Rabbit("团团", 1, "母"));
+            shop.buyAnimal(new Rabbit("团团", 1, "母"), 50.0);
             throw new AssertionError("歇业后不应继续买入动物");
         } catch (IllegalStateException expected) {
             // 歇业后的交易应被拒绝。
