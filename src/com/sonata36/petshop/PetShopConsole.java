@@ -1,6 +1,5 @@
 package com.sonata36.petshop;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,7 +20,7 @@ public final class PetShopConsole {
     }
 
     public static void main(String[] args) {
-        try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8)) {
+        try (Scanner scanner = new Scanner(System.in)) {
             new PetShopConsole(scanner).run();
         }
     }
