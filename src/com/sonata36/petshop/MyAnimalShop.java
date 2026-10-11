@@ -1,5 +1,6 @@
 package com.sonata36.petshop;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -44,17 +45,23 @@ public final class MyAnimalShop implements AnimalShop {
     }
 
     @Override
-    public void buyAnimal(Animal animal) {
+    public void buyAnimal(Animal animal, double costPrice) {
         ensureOpen();
         Objects.requireNonNull(animal, "动物不能为 null");
-        if (balance < animal.getPrice()) {
+        if (!Double.isFinite(costPrice) || costPrice < 0
+                || BigDecimal.valueOf(costPrice).scale() > 2 || costPrice >= animal.getPrice()) {
+            throw new IllegalArgumentException(String.format(Locale.ROOT,
+                    "成本价必须是低于售价 %.2f 元、最多两位小数的非负有限数字",
+                    animal.getPrice()));
+        }
+        if (balance < costPrice) {
             throw new InsufficientBalanceException(String.format(Locale.ROOT,
                     "余额不足：现有 %.2f 元，买入 %s 需要 %.2f 元",
-                    balance, animal.getName(), animal.getPrice()));
+                    balance, animal.getName(), costPrice));
         }
-        balance -= animal.getPrice();
+        balance -= costPrice;
         animals.add(animal);
-        dailyProfits.merge(LocalDate.now(clock), -animal.getPrice(), Double::sum);
+        dailyProfits.merge(LocalDate.now(clock), -costPrice, Double::sum);
     }
 
     @Override
