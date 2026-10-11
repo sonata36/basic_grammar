@@ -38,6 +38,7 @@ public abstract class Animal {
         return sex;
     }
 
+    /** 动物售出时的固定售价。 */
     public double getPrice() {
         return price;
     }
