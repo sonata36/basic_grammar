@@ -31,4 +31,4 @@ java '-Dfile.encoding=UTF-8' -cp out com.sonata36.petshop.Test
 - 控制台允许顾客选购指定动物；直接调用 `serveCustomer(customer)` 时默认售出最先入库的动物。中华田园犬售价 100 元，猫售价 200 元，兔子售价 80 元。
 - 顾客每次到店都会增加到店次数并留下独立记录，即使当时没有库存。歇业时只输出当日到店记录。
 - 进货成本价最多保留两位小数，并且必须低于动物售价。余额按成本价扣除，售出时按固定售价入账；当日利润 = 当日销售额 − 当日买入成本。构造时提供的初始库存和余额属于开店前状态，不计入当日利润。
-- 歇业后不再接受进货或顾客。业务代码使用题目正文中的 `AnimalNotFoundException`；另提供 `AnimalNotFountException` 兼容第 8 条的拼写。
+- 歇业后，进货、招待顾客或再次歇业会抛出 `IllegalStateException`；控制台会立即提示“操作失败：宠物店已经歇业”。营业期间库存为空时，招待顾客会抛出 `AnimalNotFoundException`。题目第 8 条将 `Found` 误写为 `Fount`；项目保留 `AnimalNotFountException` 作为兼容父类，`AnimalNotFoundException` 继承它。
