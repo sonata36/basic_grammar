@@ -1,7 +1,9 @@
 package com.sonata36.petshop;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -14,6 +16,7 @@ public final class PetShopConsole {
     private final Scanner scanner;
     private final Map<String, Customer> knownCustomers;
     private MyAnimalShop shop;
+    private LocalDate businessDate;
 
     private PetShopConsole(Scanner scanner) {
         this.scanner = scanner;
@@ -53,7 +56,7 @@ public final class PetShopConsole {
                             shop.close();
                             break;
                         case "5":
-                            openNewShop();
+                            openNextDay();
                             break;
                         case "0":
                             System.out.println("测试结束。");
@@ -73,9 +76,29 @@ public final class PetShopConsole {
 
     private void openNewShop() {
         double balance = readNonNegativeDouble("请输入开店余额：");
-        shop = new MyAnimalShop(balance, List.of());
+        businessDate = LocalDate.now();
+        shop = new MyAnimalShop(balance, List.of(), List.of(), businessClock());
         knownCustomers.clear();
         System.out.printf(Locale.ROOT, "新店已开张，余额：%.2f 元%n", balance);
+    }
+
+    private void openNextDay() {
+        if (shop.isOpen()) {
+            System.out.println("操作失败：请先歇业，再开始下一营业日");
+            return;
+        }
+        double balance = shop.getBalance();
+        List<Animal> animals = shop.getAnimals();
+        List<Customer> customers = shop.getCustomers();
+        businessDate = businessDate.plusDays(1);
+        shop = new MyAnimalShop(balance, animals, customers, businessClock());
+        System.out.printf(Locale.ROOT, "下一营业日（%s）已开张，继承余额：%.2f 元，库存：%d 只%n",
+                businessDate, balance, animals.size());
+    }
+
+    private Clock businessClock() {
+        ZoneId zone = ZoneId.systemDefault();
+        return Clock.fixed(businessDate.atStartOfDay(zone).toInstant(), zone);
     }
 
     private void buyAnimal() {
@@ -121,10 +144,11 @@ public final class PetShopConsole {
     }
 
     private void showStatus() {
+        System.out.println("营业日期：" + businessDate);
         System.out.println("营业状态：" + (shop.isOpen() ? "营业中" : "已歇业"));
         System.out.printf(Locale.ROOT, "余额：%.2f 元%n", shop.getBalance());
         System.out.printf(Locale.ROOT, "今日利润：%.2f 元%n",
-                shop.getProfit(LocalDate.now()));
+                shop.getProfit(businessDate));
         List<Animal> animals = shop.getAnimals();
         System.out.println("库存（按入库顺序）：" + animals.size() + " 只");
         for (int index = 0; index < animals.size(); index++) {
@@ -139,7 +163,7 @@ public final class PetShopConsole {
     private void printMenu() {
         System.out.println();
         System.out.println("1. 买入动物  2. 招待顾客  3. 查看状态");
-        System.out.println("4. 歇业      5. 重新开店  0. 退出测试");
+        System.out.println("4. 歇业      5. 次日开店  0. 退出测试");
     }
 
     private String readAnimalType() {
