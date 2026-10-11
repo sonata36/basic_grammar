@@ -9,7 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-/** 采用先进先出方式出售动物的宠物店。 */
+/** 支持顾客指定动物的宠物店；未指定时出售最先入库的动物。 */
 public final class MyAnimalShop implements AnimalShop {
     private double balance;
     private final List<Animal> animals;
@@ -59,15 +59,23 @@ public final class MyAnimalShop implements AnimalShop {
 
     @Override
     public Animal serveCustomer(Customer customer) {
+        return serveCustomer(customer, 0);
+    }
+
+    @Override
+    public Animal serveCustomer(Customer customer, int animalIndex) {
         ensureOpen();
         Objects.requireNonNull(customer, "顾客不能为 null");
         LocalDate today = LocalDate.now(clock);
-        customer.recordVisit(today);
-        customers.add(customer.snapshot());
         if (animals.isEmpty()) {
+            recordVisit(customer, today);
             throw new AnimalNotFoundException("店内没有动物可买");
         }
-        Animal soldAnimal = animals.remove(0);
+        if (animalIndex < 0 || animalIndex >= animals.size()) {
+            throw new IllegalArgumentException("所选动物不在库存中");
+        }
+        recordVisit(customer, today);
+        Animal soldAnimal = animals.remove(animalIndex);
         balance += soldAnimal.getPrice();
         dailyProfits.merge(today, soldAnimal.getPrice(), Double::sum);
         System.out.println("售出动物：" + soldAnimal);
@@ -122,5 +130,10 @@ public final class MyAnimalShop implements AnimalShop {
         if (!open) {
             throw new IllegalStateException("宠物店已经歇业");
         }
+    }
+
+    private void recordVisit(Customer customer, LocalDate date) {
+        customer.recordVisit(date);
+        customers.add(customer.snapshot());
     }
 }

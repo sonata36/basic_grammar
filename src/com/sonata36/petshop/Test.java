@@ -54,6 +54,28 @@ public final class Test {
         check(insufficientBalance, "余额不足应抛出 InsufficientBalanceException");
         check(poorShop.getAnimals().isEmpty(), "买入失败不应改变库存");
 
+        MyAnimalShop choiceShop = new MyAnimalShop(500, List.of(
+                new ChineseRuralDog("大黄", 3, "公", true),
+                new Cat("小白", 2, "母"),
+                new Rabbit("雪球", 1, "母")), new ArrayList<>(), clock);
+        Customer bob = new Customer("小陈");
+        check(choiceShop.serveCustomer(bob, 1) instanceof Cat, "应出售顾客选中的猫");
+        check(choiceShop.getAnimals().size() == 2, "只应移除选中的动物");
+        check("大黄".equals(choiceShop.getAnimals().get(0).getName()),
+                "未选中的第一只动物应留在库存中");
+        check("雪球".equals(choiceShop.getAnimals().get(1).getName()),
+                "未选中的第三只动物应留在库存中");
+        check(choiceShop.getBalance() == 700.0, "余额应按选中动物的价格入账");
+        check(choiceShop.getProfit(today) == 200.0, "利润应按选中动物的价格计算");
+        boolean invalidChoice = false;
+        try {
+            choiceShop.serveCustomer(bob, 9);
+        } catch (IllegalArgumentException exception) {
+            invalidChoice = true;
+        }
+        check(invalidChoice, "越界的宠物编号应被拒绝");
+        check(bob.getVisitCount() == 1, "选择无效时不应增加到店次数");
+
         ByteArrayOutputStream reportBytes = new ByteArrayOutputStream();
         PrintStream originalOut = System.out;
         try (PrintStream capturedOut = new PrintStream(reportBytes, true, StandardCharsets.UTF_8)) {

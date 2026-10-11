@@ -77,7 +77,7 @@ public final class PetShopConsole {
         String type = readAnimalType();
         String name = readNonBlank("动物名字：");
         int age = readNonNegativeInt("动物年龄：");
-        String sex = readNonBlank("动物性别：");
+        String sex = readSex();
         Animal animal;
         switch (type) {
             case "1":
@@ -97,7 +97,17 @@ public final class PetShopConsole {
     private void serveCustomer() {
         String name = readNonBlank("顾客名字：");
         Customer customer = knownCustomers.computeIfAbsent(name, Customer::new);
-        shop.serveCustomer(customer);
+        List<Animal> animals = shop.getAnimals();
+        if (animals.isEmpty()) {
+            shop.serveCustomer(customer);
+            return;
+        }
+        System.out.println("可选宠物：");
+        for (int index = 0; index < animals.size(); index++) {
+            System.out.println((index + 1) + ". " + animals.get(index));
+        }
+        int choice = readAnimalChoice(animals.size());
+        shop.serveCustomer(customer, choice - 1);
         System.out.println("顾客到店次数：" + customer.getVisitCount());
     }
 
@@ -107,7 +117,7 @@ public final class PetShopConsole {
         System.out.printf(Locale.ROOT, "今日利润：%.2f 元%n",
                 shop.getProfit(LocalDate.now()));
         List<Animal> animals = shop.getAnimals();
-        System.out.println("库存（按出售顺序）：" + animals.size() + " 只");
+        System.out.println("库存（按入库顺序）：" + animals.size() + " 只");
         for (int index = 0; index < animals.size(); index++) {
             System.out.println((index + 1) + ". " + animals.get(index));
         }
@@ -130,6 +140,30 @@ public final class PetShopConsole {
                 return type;
             }
             System.out.println("请输入 1、2 或 3。");
+        }
+    }
+
+    private String readSex() {
+        System.out.println("动物性别：1. 公  2. 母");
+        while (true) {
+            String choice = readLine("请选择动物性别 (1/2)：");
+            if ("1".equals(choice)) {
+                return "公";
+            }
+            if ("2".equals(choice)) {
+                return "母";
+            }
+            System.out.println("请输入 1 或 2。");
+        }
+    }
+
+    private int readAnimalChoice(int animalCount) {
+        while (true) {
+            int choice = readNonNegativeInt("请选择要购买的宠物编号：");
+            if (choice >= 1 && choice <= animalCount) {
+                return choice;
+            }
+            System.out.println("请输入列表中的宠物编号（1～" + animalCount + "）。");
         }
     }
 
