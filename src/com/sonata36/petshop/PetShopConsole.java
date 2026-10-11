@@ -1,5 +1,6 @@
 package com.sonata36.petshop;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -90,8 +91,11 @@ public final class PetShopConsole {
             default:
                 animal = new Rabbit(name, age, sex);
         }
-        shop.buyAnimal(animal);
+        double costPrice = readCostPrice(animal.getPrice());
+        shop.buyAnimal(animal, costPrice);
         System.out.println("买入成功：" + animal);
+        System.out.printf(Locale.ROOT, "成本价：%.2f 元，售价：%.2f 元，预计售出利润：%.2f 元%n",
+                costPrice, animal.getPrice(), animal.getPrice() - costPrice);
     }
 
     private void serveCustomer() {
@@ -202,6 +206,21 @@ public final class PetShopConsole {
                 // 输入格式不正确时统一提示并重试。
             }
             System.out.println("请输入非负的有限数字。");
+        }
+    }
+
+    private double readCostPrice(double sellingPrice) {
+        while (true) {
+            double costPrice = readNonNegativeDouble(String.format(Locale.ROOT,
+                    "请输入成本价（须低于售价 %.2f 元）：", sellingPrice));
+            if (BigDecimal.valueOf(costPrice).scale() > 2) {
+                System.out.println("成本价最多保留两位小数。");
+                continue;
+            }
+            if (costPrice < sellingPrice) {
+                return costPrice;
+            }
+            System.out.println("成本价必须低于售价，才能保证售出有利润。");
         }
     }
 
