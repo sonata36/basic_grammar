@@ -33,6 +33,11 @@ public final class PetShopConsole {
             while (true) {
                 printMenu();
                 String choice = readLine("请选择操作：");
+                if (!shop.isOpen() && ("1".equals(choice) || "2".equals(choice)
+                        || "4".equals(choice))) {
+                    System.out.println("操作失败：宠物店已经歇业");
+                    continue;
+                }
                 try {
                     switch (choice) {
                         case "1":
